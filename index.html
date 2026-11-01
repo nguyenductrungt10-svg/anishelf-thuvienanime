@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home – AniList</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header id="hdr"></header>
+    <main class="wrap">
+        <section class="hero" id="hero">
+            <div class="hero-in">
+                <div class="msg">Đang tải…</div>
+            </div>
+        </section>
+        <form class="qs" id="qs"><input id="q" placeholder="Tìm anime bạn thích…"><button class="btn cy">Tìm
+                kiếm</button></form>
+        <section class="sec">
+            <div class="sec-h">
+                <h2>🔥 Anime nổi bật (đang chiếu)</h2><a href="explore.html?status=airing">Xem thêm →</a>
+            </div>
+            <div id="feat"></div>
+        </section>
+        <section class="sec">
+            <div class="sec-h">
+                <h2>💜 Anime phổ biến</h2><a href="explore.html">Xem thêm →</a>
+            </div>
+            <div id="pop"></div>
+        </section>
+    </main>
+    <footer id="ftr"></footer>
+    <script src="common.js"></script>
+    <script>
+        shell('index.html');
+        let hero = [], hi = 0, timer, feat = [], pop = [];
+        const short = (s, n) => s.length > n ? s.slice(0, n).trim() + '…' : s;
+
+        function showHero(i) {
+            if (!hero.length) return;
+            hi = i; const a = hero[i], inList = Data.list().some(x => x.malId === a.id);
+            $('#hero').innerHTML = `<div class="hero-bg" style="background-image:url('${esc(a.big)}')"></div>
+    <div class="hero-in"><span class="pill">🔥 Đang nổi bật</span><h1>${esc(a.title)}</h1>
+    <div class="meta">★ ${a.score || 'N/A'} · ${a.eps || '?'} tập · ${esc(a.genres.slice(0, 3).join(', '))}</div>
+    <p>${esc(short(a.synopsis, 210))}</p>
+    <div class="hbtn"><a class="btn" href="details.html?id=${a.id}">Xem chi tiết</a>
+    <button class="btn ghost" data-act="add" data-id="${a.id}" ${inList ? 'disabled' : ''}>${inList ? '✓ Đã thêm' : '+ My List'}</button></div></div>
+    <div class="dots">${hero.map((_, k) => `<i class="${k === i ? 'on' : ''}" data-dot="${k}"></i>`).join('')}</div>`;
+        }
+        function render() {
+            $('#feat').innerHTML = `<div class="grid">${feat.map(cardHTML).join('')}</div>`;
+            $('#pop').innerHTML = pop.length ? `<div class="grid">${pop.map(cardHTML).join('')}</div>` : skel(6);
+            showHero(hi);
+        }
+        document.addEventListener('click', e => {
+            const d = e.target.closest('[data-dot]');
+            if (d) { showHero(+d.dataset.dot); clearInterval(timer); timer = setInterval(() => showHero((hi + 1) % hero.length), 6500); }
+        });
+        cardActions(render);
+        $('#qs').onsubmit = e => { e.preventDefault(); location.href = 'explore.html?q=' + encodeURIComponent($('#q').value.trim()); };
+
+        (async () => {
+            $('#feat').innerHTML = skel(6); $('#pop').innerHTML = skel(6);
+            try {
+                const j = await api('/top/anime?filter=airing&limit=12&sfw=true');
+                feat = j.data.map(norm); hero = feat.slice(0, 5); render();
+                timer = setInterval(() => showHero((hi + 1) % hero.length), 6500);
+                const p = await api('/top/anime?filter=bypopularity&limit=12&sfw=true');
+                pop = p.data.map(norm); render();
+            } catch (e) { $('#hero').innerHTML = `<div class="hero-in">${errMsg}</div>`; $('#feat').innerHTML = $('#pop').innerHTML = ''; }
+        })();
+    </script>
+</body>
+
+</html>

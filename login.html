@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đăng nhập – AniList</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header id="hdr"></header>
+    <main class="wrap auth">
+        <div class="box">
+            <h2>Đăng nhập</h2>
+            <div class="meta">Chào mừng quay lại!</div>
+            <form id="f">
+                <label>Tên đăng nhập</label><input id="u" autocomplete="username" required>
+                <label>Mật khẩu</label><input id="p" type="password" autocomplete="current-password" required>
+
+                <div class="err" id="err"></div>
+                <button class="btn" style="width:100%">Đăng nhập</button>
+            </form>
+            <div class="alt">Chưa có tài khoản? <a href="register.html">Đăng ký</a></div>
+        </div>
+    </main>
+    <footer id="ftr"></footer>
+    <script src="common.js"></script>
+    <script>
+        shell('');
+        if (Auth.cur()) location.href = 'index.html';
+        $('#f').onsubmit = async e => {
+            e.preventDefault();
+            const u = $('#u').value.trim(), p = $('#p').value;
+            try {
+                await Auth.login(u, p);
+                afterAuth();
+            } catch (err) { $('#err').textContent = err; }
+        };
+    </script>
+</body>
+
+</html>

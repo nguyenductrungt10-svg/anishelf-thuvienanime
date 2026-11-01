@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My List – AniList</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header id="hdr"></header>
+    <main class="wrap">
+        <h2>📚 My List</h2>
+        <div class="bar l"><input id="lq" placeholder="Lọc theo tên…"><button class="btn" id="addManual">+ Thêm
+                anime</button></div>
+        <div class="tabs" id="tabs"></div>
+        <div id="res"></div>
+    </main>
+    <footer id="ftr"></footer>
+    <script src="common.js"></script>
+    <script>
+        shell('mylist.html');
+        if (requireLogin()) {
+            let tab = '';
+            const render = () => {
+                const all = Data.list(), kw = $('#lq').value.trim().toLowerCase();
+                $('#tabs').innerHTML = [['', 'All']].concat(Object.entries(ST)).map(([k, v]) =>
+                    `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${v} (${k ? all.filter(x => x.status === k).length : all.length})</button>`).join('');
+                const arr = all.filter(x => (!tab || x.status === tab) && x.title.toLowerCase().includes(kw));
+                $('#res').innerHTML = arr.length ? `<div class="rows">${arr.map((x, i) => `
+      <div class="row" style="animation-delay:${Math.min(i, 10) * 40}ms"><img src="${esc(x.img)}" alt="">
+        <div><h3>${x.malId ? `<a href="details.html?id=${x.malId}">${esc(x.title)}</a>` : esc(x.title)}</h3>
+          <span class="tag ${x.status}">${ST[x.status]}</span>
+          <div class="meta">Đã xem ${x.watched}/${x.eps || '?'} tập · ${x.rating ? '⭐ ' + x.rating + '/10' : 'Chưa chấm điểm'}</div>
+          <div class="prog"><i style="width:${x.eps ? Math.round(x.watched / x.eps * 100) : (x.status === 'completed' ? 100 : 0)}%"></i></div>
+          ${x.note ? `<div class="meta">📝 ${esc(x.note)}</div><br>` : ''}
+          <div class="acts r">
+            ${x.status !== 'completed' ? `<button class="btn sm grn" data-act="done" data-uid="${x.uid}">✓ Completed</button>` : ''}
+            <button class="btn sm ghost" data-act="edit" data-uid="${x.uid}">Sửa</button>
+            <button class="btn sm red" data-act="del" data-uid="${x.uid}">Xoá</button>
+          </div></div></div>`).join('')}</div>`
+                    : '<div class="msg">Chưa có anime nào ở mục này. Thêm từ trang Explore hoặc bấm “+ Thêm anime”.</div>';
+            };
+            document.addEventListener('click', e => {
+                const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; return render(); }
+                const b = e.target.closest('[data-act]'); if (!b) return;
+                const uid = b.dataset.uid, list = Data.list(), x = list.find(i => i.uid === uid);
+                if (b.dataset.act === 'edit') openDlg(x, 'Sửa anime', render);
+                if (b.dataset.act === 'del' && confirm('Xoá anime này khỏi My List?')) { Data.setList(list.filter(i => i.uid !== uid)); toast('Đã xoá'); render(); }
+                if (b.dataset.act === 'done') { x.status = 'completed'; x.watched = x.eps || x.watched; Data.setList(list); toast('Đã đánh dấu hoàn thành ✓'); render(); }
+            });
+            $('#lq').oninput = render;
+            $('#addManual').onclick = () => openDlg({ status: 'plan' }, 'Thêm anime mới', render);
+            render();
+        }
+    </script>
+</body>
+
+</html>
